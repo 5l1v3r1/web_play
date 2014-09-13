@@ -11,6 +11,7 @@ String projectDirectory(String name) {
 }
 
 String get packagesDirectory => projectDirectory('packages');
+String get sharedDirectory => projectDirectory('shared');
 
 void setupRoutes(Router router, String name) {
   // compile index.dart if necessary
@@ -23,6 +24,7 @@ void setupRoutes(Router router, String name) {
       path_library.join(projectDirectory(name), 'index.html'));
   
   // serve packages directory
+  router.staticDirectory('/$name/shared', sharedDirectory);
   router.staticDirectory('/$name/packages', packagesDirectory);
   
   // serve the rest of the directory contents normally
@@ -42,6 +44,15 @@ void main(List<String> args) {
       'root_page.html'));
   router.staticFile('/', path_library.join(projectDirectory('server'),
       'root_page.html'));
+  
+  router.get('/slave/websocket', (RouteRequest req) {
+    WebSocketTransformer.upgrade(req.request).then((WebSocket websocket) {
+      websocket.listen((message) => print('$message'));
+      websocket.add('hey');
+    }).catchError((_) {
+    });
+  });
+  
   setupRoutes(router, 'controller');
   setupRoutes(router, 'slave');
   
