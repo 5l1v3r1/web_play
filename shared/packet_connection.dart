@@ -21,7 +21,7 @@ class PacketConnection {
     String wsProtocol = (window.location.protocol == 'http:' ? 'ws' : 'wss');
     String wsHost = window.location.host;
     String wsPath = path.posix.join(window.location.pathname, 'websocket');
-    _connectUrl = '$wsProtocol://$wsHost/$wsPath';
+    _connectUrl = '$wsProtocol://$wsHost$wsPath';
     _connect();
   }
   
