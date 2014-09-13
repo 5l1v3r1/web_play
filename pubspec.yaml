@@ -2,4 +2,5 @@ name: web_play
 description: A sample command-line application
 dependencies:
   browser: any
-  web_router: any
+  path: any
+  web_router: 0.0.3
