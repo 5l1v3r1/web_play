@@ -24,6 +24,7 @@ class Packet {
   static const int TYPE_SEND_TO_SLAVE = 2;
   static const int TYPE_SEND_TO_CONTROLLER = 3;
   static const int TYPE_SLAVE_IDENTIFIER = 4;
+  static const int TYPE_SLAVE_DISCONNECT = 5;
   
   int type;
   int number;
@@ -52,5 +53,9 @@ class Packet {
     result.addAll(encodeInteger(number));
     result.addAll(body);
     return result;
+  }
+  
+  TypedData encodeTypedData() {
+    return new Uint8List.fromList(encode());
   }
 }

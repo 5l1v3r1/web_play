@@ -20,6 +20,11 @@ class Controller extends Identifiable {
     _add(new Packet(Packet.TYPE_SEND_TO_CONTROLLER, slave.identifier, data));
   }
   
+  void slaveDisconnect() {
+    _add(new Packet(Packet.TYPE_SLAVE_DISCONNECT, slave.identifier, []));
+    slave = null;
+  }
+  
   void _hangup(_) {
     new ControllerPool().remove(this);
     if (slave != null) {
