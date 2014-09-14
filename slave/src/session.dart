@@ -37,8 +37,10 @@ class Session {
     int seq = _messageSequence++;
     Completer c = new Completer();
     _pending[seq] = c;
+    List<int> payload = encodeInteger(identifier);
+    payload.addAll(data);
     _currentSocket.sendTypedData(new Packet(Packet.TYPE_SEND_TO_CONTROLLER,
-        identifier, data).encodeTypedData());
+        seq, payload).encodeTypedData());
     return c.future;
   }
   

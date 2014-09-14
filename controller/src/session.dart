@@ -18,7 +18,7 @@ class Session {
   final Map<int, Completer> _pending = {};
   
   final StreamController<List<int>> _messageController;
-  Stream get stream => _messageController.stream;
+  Stream<List<int>> get stream => _messageController.stream;
   
   static Future<Session> connect(int slaveId) {
     var completer = new Completer<Session>();
@@ -69,7 +69,7 @@ class Session {
   }
   
   Future send(List<int> data) {
-    return _add(new Packet(Packet.TYPE_SEND_TO_SLAVE, 0, []));
+    return _add(new Packet(Packet.TYPE_SEND_TO_SLAVE, 0, data));
   }
   
   Future _connect() {

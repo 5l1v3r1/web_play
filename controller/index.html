@@ -7,12 +7,17 @@
     <title>Web Play - Controller</title>
     <link rel="stylesheet" type="text/css" href="style/loader.css">
     <link rel="stylesheet" type="text/css" href="style/error.css">
+    <link rel="stylesheet" type="text/css" href="style/authenticate.css">
   </head>
  
   <body>
     <img id="loader" src="images/loader.gif">
     <label id="error"></label>
-    <div 
+    <div id="authenticate">
+      <input id="passcode" placeholder="Passcode" />
+      <br />
+      <a id="submit-passcode">Submit</a>
+    </div>
     <script type="application/dart" src="index.dart"></script>
     <script src="packages/browser/dart.js"></script>
   </body>

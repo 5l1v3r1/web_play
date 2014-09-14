@@ -1,0 +1,29 @@
+#authenticate {
+  position: fixed;
+  width: 100%;
+  left: 0px;
+  top: 0px;
+  opacity: 0.0;
+  pointer-events: none;
+  text-align: center;
+}
+
+#passcode {
+  margin-top: 1em;
+  width: 15em;
+  height: 2em;
+  line-height: 2em;
+  font-size: 1em;
+  text-align: center;
+}
+
+#submit-passcode {
+  position: relative;
+  top: 0.7em;
+  
+  border: none;
+  background-color: transparent;
+  color: #39F;
+  font-size: 1em;
+  cursor: pointer;
+}

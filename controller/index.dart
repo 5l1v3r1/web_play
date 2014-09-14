@@ -5,13 +5,18 @@ import 'dart:math';
 import 'dart:async';
 import 'package:presenter/presenter.dart';
 import 'shared/websocket_url.dart';
+import 'shared/client_packet.dart';
 import 'shared/packet.dart';
 
 part 'src/session.dart';
 
 Animatable errorView;
 Animatable loaderView;
+Animatable authenticateView;
+Animatable currentView;
 double animationDuration = 0.5;
+Session session;
+Future transitionDone = new Future(() => null);
 
 int readQueryServerId() {
   Uri locationUri = Uri.parse(window.location.toString());
@@ -31,7 +36,11 @@ void main() {
       propertyKeyframes('opacity', '0.0', '1.0', disableEvents: true));
   loaderView = new Animatable(querySelector('#loader'),
       propertyKeyframes('opacity', '0.0', '1.0'));
+  authenticateView = new Animatable(querySelector('#authenticate'),
+      propertyKeyframes('opacity', '0.0', '1.0', disableEvents: true));
 
+  currentView = loaderView;
+  
   window.onResize.listen(handleResize);
   handleResize(null);
   
@@ -39,21 +48,57 @@ void main() {
   if (serverId < 0) return;
   
   Session.connect(serverId).then((Session s) {
-    print('connected...what to do now?');
+    session = s;
+    showView(authenticateView);
+    querySelector('#submit-passcode').onClick.listen(handleSubmit);
+    
+    session.stream.listen((List<int> data) {
+      handlePacket(new ClientPacket.decode(data));
+    }, onDone: () {
+      showError('Connection terminated');
+    });
   }).catchError((_) {
     showError('Connection failed');
-    loaderView.run(false, duration: animationDuration);
   });
 }
 
 void handleResize(_) {
   num smaller = min(window.innerWidth, window.innerHeight);
-  Element errorLabel = querySelector('#error');
-  errorLabel.style..fontSize = '${(smaller / 10).round()}px'
-                  ..lineHeight = '${window.innerHeight}px';
+  document.body.style.fontSize = '${smaller / 20}px';
 }
 
 void showError(String message) {
-  errorView.run(true, duration: animationDuration, delay: animationDuration);
-  errorView.element.innerHtml = message;
+  transitionDone = transitionDone.then((_) {
+    return currentView.run(false, duration: animationDuration);
+  }).then((_) {
+    currentView = errorView;
+    errorView.element.innerHtml = message;
+    return errorView.run(true, duration: animationDuration);
+  });
+}
+
+void showView(Animatable nextView) {
+  transitionDone = transitionDone.then((_) {
+    return currentView.run(false, duration: animationDuration);
+  }).then((_) {
+    currentView = nextView;
+    return nextView.run(true, duration: animationDuration);
+  });
+}
+
+void handleSubmit(_) {
+  showView(loaderView);
+  InputElement field = querySelector('#passcode');
+  session.send(field.value.codeUnits).catchError((_) {});
+}
+
+void handlePacket(ClientPacket packet) {
+  if (packet.type == ClientPacket.TYPE_PASSCODE) {
+    assert(packet.payload.length != 1);
+    if (packet.payload[0] == 0) {
+      showError('Incorrect passcode');
+    } else {
+      showError('TODO: control panel!');
+    }
+  }
 }
