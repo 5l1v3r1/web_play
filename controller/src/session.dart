@@ -7,7 +7,7 @@ class OperationFailedError extends Error {
 }
 
 class Session {
-  final WebSocket _connection;
+  WebSocket _connection;
   int _slaveId = -1;
   
   int _messageSequence = 0;
@@ -19,9 +19,13 @@ class Session {
   final StreamController _openController;
   Stream get onOpen => _openController.stream;
   
+  final StreamController<List<int>> _messageController;
+  Stream get onMessage => _messageController.stream;
+  
   Session() : _closeController = new StreamController(),
       _openController = new StreamController(),
-      _connection = new WebSocket(websocketUrl) {
+      _messageController = new StreamController<List<int>>() {
+    _connection = new WebSocket(websocketUrl);
     _connection.binaryType = 'arraybuffer';
     _connection.onError.listen(_handleClose);
     _connection.onClose.listen(_handleClose);
@@ -31,7 +35,7 @@ class Session {
       if (p.type == Packet.TYPE_SLAVE_DISCONNECT) {
         _handleSlaveDisconnect();
       } else if (p.type == Packet.TYPE_SEND_TO_CONTROLLER) {
-        // TODO: process packet here
+        _messageController.add(p.body);
       } else {
         Completer c = _pending.remove(p.number);
         if (c == null) return;
@@ -44,12 +48,12 @@ class Session {
     });
   }
   
-  Future connect(int serverId) {
-    return _add(new Packet(Packet.TYPE_CONNECT, 0, encodeInteger(serverId)));
-  }
-  
-  Future disconnect() {
-    return _add(new Packet(Packet.TYPE_DISCONNECT, 0, []));
+  Future connect(int slaveId) {
+    var connected = _add(new Packet(Packet.TYPE_CONNECT, 0,
+        encodeInteger(slaveId)));
+    return connected.then((_) {
+      _slaveId = slaveId;
+    });
   }
   
   Future send(List<int> data) {
@@ -57,6 +61,7 @@ class Session {
   }
   
   void _handleClose(_) {
+    _connection = null;
     _closeController.add(null);
     for (Completer c in _pending.values) {
       c.completeError(new SessionClosedError());

@@ -4,9 +4,9 @@ import 'shared/websocket_url.dart';
 import 'shared/packet.dart';
 import 'dart:html';
 import 'dart:async';
-//import 'dart:typed_data';
 
 part 'src/session.dart';
+part 'src/controller.dart';
 
 Session session;
 

@@ -19,7 +19,7 @@ class Slave extends Identifiable {
   
   void controllerDisconnect(Controller c) {
     controllers.remove(c.identifier);
-    _add(new Packet(Packet.TYPE_DISCONNECT, c.identifier, []));
+    _add(new Packet(Packet.TYPE_CONTROLLER_DISCONNECT, c.identifier, []));
   }
   
   void controllerSend(Controller c, List<int> msg) {
@@ -27,6 +27,10 @@ class Slave extends Identifiable {
   }
   
   void _hangup(_) {
+    for (Controller c in controllers.values) {
+      assert(c.slave == this);
+      c.slaveDisconnect();
+    }
     new SlavePool().remove(this);
   }
   

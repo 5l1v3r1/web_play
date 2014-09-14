@@ -20,10 +20,10 @@ int decodeInteger(List<int> data) {
 
 class Packet {
   static const int TYPE_CONNECT = 0;
-  static const int TYPE_DISCONNECT = 1;
-  static const int TYPE_SEND_TO_SLAVE = 2;
-  static const int TYPE_SEND_TO_CONTROLLER = 3;
-  static const int TYPE_SLAVE_IDENTIFIER = 4;
+  static const int TYPE_SEND_TO_SLAVE = 1;
+  static const int TYPE_SEND_TO_CONTROLLER = 2;
+  static const int TYPE_SLAVE_IDENTIFIER = 3;
+  static const int TYPE_CONTROLLER_DISCONNECT = 4;
   static const int TYPE_SLAVE_DISCONNECT = 5;
   
   int type;

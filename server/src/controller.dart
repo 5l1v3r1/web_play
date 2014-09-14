@@ -42,8 +42,6 @@ class Controller extends Identifiable {
     }
     if (packet.type == Packet.TYPE_CONNECT) {
       _connectCommand(packet);
-    } else if (packet.type == Packet.TYPE_DISCONNECT) {
-      _disconnectCommand(packet);
     } else if (packet.type == Packet.TYPE_SEND_TO_SLAVE) {
       _sendCommand(packet);
     } else {
@@ -62,21 +60,6 @@ class Controller extends Identifiable {
       packet.body = [0];
     } else {
       slave.controllerConnect(this);
-      packet.body = [1];
-    }
-    _add(packet);
-  }
-  
-  void _disconnectCommand(Packet packet) {
-    if (packet.body.length != 0) {
-      socket.close();
-      return;
-    }
-    if (slave == null) {
-      packet.body = [0];
-    } else {
-      slave.controllerDisconnect(this);
-      slave = null;
       packet.body = [1];
     }
     _add(packet);
