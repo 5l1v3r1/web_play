@@ -18,4 +18,12 @@ void main() {
   session.onIdentify.listen((id) {
     querySelector('#status').innerHtml = 'Identifier is $id';
   });
+  session.onController.listen((Controller c) {
+    print('got controller ${c.identifier}');
+    c.onData.listen((List<int> data) {
+      print('controller ${c.identifier} -> $data');
+    }, onDone: () {
+      print('controller ${c.identifier} done');
+    });
+  });
 }

@@ -3,33 +3,53 @@ part of web_play_controller;
 class SessionClosedError extends Error {
 }
 
+class SessionConnectError extends Error {
+}
+
 class OperationFailedError extends Error {
 }
 
 class Session {
+  final int slaveId;
+  
   WebSocket _connection;
-  int _slaveId = -1;
   
   int _messageSequence = 0;
   final Map<int, Completer> _pending = {};
   
-  final StreamController _closeController;
-  Stream get onClose => _closeController.stream;
-  
-  final StreamController _openController;
-  Stream get onOpen => _openController.stream;
-  
   final StreamController<List<int>> _messageController;
-  Stream get onMessage => _messageController.stream;
+  Stream get stream => _messageController.stream;
   
-  Session() : _closeController = new StreamController(),
-      _openController = new StreamController(),
-      _messageController = new StreamController<List<int>>() {
+  static Future<Session> connect(int slaveId) {
+    var completer = new Completer<Session>();
+    var session = new Session._(slaveId);
+    StreamSubscription sub1;
+    StreamSubscription sub2;
+    Function failure = (_) {
+      sub1.cancel();
+      sub2.cancel();
+      completer.completeError(new SessionConnectError());
+    };
+    sub1 = session._connection.onError.listen(failure);
+    sub2 = session._connection.onClose.listen(failure);
+    session._connection.onOpen.listen((_) {
+      sub1.cancel();
+      sub2.cancel();
+      session._connect().then((_) {
+        completer.complete(session);
+      }).catchError((e) {
+        completer.completeError(e);
+      });
+    });
+    return completer.future;
+  }
+  
+  Session._(this.slaveId) : _messageController =
+      new StreamController<List<int>>() {
     _connection = new WebSocket(websocketUrl);
     _connection.binaryType = 'arraybuffer';
     _connection.onError.listen(_handleClose);
     _connection.onClose.listen(_handleClose);
-    _connection.onOpen.listen((_) => _openController.add(null));
     _connection.onMessage.listen((MessageEvent evt) {
       Packet p = new Packet.decode(evt.data);
       if (p.type == Packet.TYPE_SLAVE_DISCONNECT) {
@@ -48,21 +68,17 @@ class Session {
     });
   }
   
-  Future connect(int slaveId) {
-    var connected = _add(new Packet(Packet.TYPE_CONNECT, 0,
-        encodeInteger(slaveId)));
-    return connected.then((_) {
-      _slaveId = slaveId;
-    });
-  }
-  
   Future send(List<int> data) {
     return _add(new Packet(Packet.TYPE_SEND_TO_SLAVE, 0, []));
   }
   
+  Future _connect() {
+    return _add(new Packet(Packet.TYPE_CONNECT, 0, encodeInteger(slaveId)));
+  }
+  
   void _handleClose(_) {
     _connection = null;
-    _closeController.add(null);
+    _messageController.close();
     for (Completer c in _pending.values) {
       c.completeError(new SessionClosedError());
     }
@@ -70,8 +86,6 @@ class Session {
   }
   
   void _handleSlaveDisconnect() {
-    if (_slaveId == -1) return;
-    _slaveId = -1;
     _connection.close();
   }
   
