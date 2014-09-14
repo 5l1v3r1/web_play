@@ -3,6 +3,12 @@ library web_play_server;
 import 'dart:io';
 import 'package:web_router/web_router.dart';
 import 'package:path/path.dart' as path_library;
+import 'shared/packing.dart';
+import 'shared/packet_type.dart';
+
+part 'src/slave.dart';
+part 'src/controller.dart';
+part 'src/pools.dart';
 
 String projectDirectory(String name) {
   String scriptDir = path_library.dirname(Platform.script.path);
@@ -12,6 +18,12 @@ String projectDirectory(String name) {
 
 String get packagesDirectory => projectDirectory('packages');
 String get sharedDirectory => projectDirectory('shared');
+
+int slaveCounter = 0;
+int controllerCounter = 0;
+
+Map<int, Controller> controllers = {};
+Map<int, Slave> slaves = {};
 
 void setupRoutes(Router router, String name) {
   // compile index.dart if necessary
@@ -45,13 +57,8 @@ void main(List<String> args) {
   router.staticFile('/', path_library.join(projectDirectory('server'),
       'root_page.html'));
   
-  router.get('/slave/websocket', (RouteRequest req) {
-    WebSocketTransformer.upgrade(req.request).then((WebSocket websocket) {
-      websocket.listen((message) => print('$message'));
-      websocket.add('hey');
-    }).catchError((_) {
-    });
-  });
+  router.get('/slave/websocket', slaveWebsocket);
+  router.get('/controller/websocket', controllerWebsocket);
   
   setupRoutes(router, 'controller');
   setupRoutes(router, 'slave');
@@ -59,5 +66,19 @@ void main(List<String> args) {
   HttpServer.bind('localhost', port).then((HttpServer server) {
     print('Application listening on http://localhost:$port');
     server.listen(router.httpHandler);
+  });
+}
+
+void slaveWebsocket(RouteRequest req) {
+  WebSocketTransformer.upgrade(req.request).then((WebSocket websocket) {
+    new Slave(websocket);
+  }).catchError((_) {
+  });
+}
+
+void controllerWebsocket(RouteRequest req) {
+  WebSocketTransformer.upgrade(req.request).then((WebSocket websocket) {
+    new Controller(websocket);
+  }).catchError((_) {
   });
 }

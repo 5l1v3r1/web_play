@@ -31,6 +31,7 @@ class PacketConnection {
     _subs.add(_connection.onClose.listen(_retry));
     _subs.add(_connection.onMessage.listen((MessageEvent message) {
       _controller.add(message);
+      _connection.close();
     }));
   }
   
