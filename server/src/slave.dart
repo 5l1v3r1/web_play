@@ -42,16 +42,19 @@ class Slave extends Identifiable {
       socket.close();
       return;
     }
-    if (packet.type != Packet.TYPE_SEND_TO_CONTROLLER) {
+    if (packet.type != Packet.TYPE_SEND_TO_CONTROLLER ||
+        packet.body.length < 6) {
       socket.close();
       return;
     }
-    if (!controllers.containsKey(packet.number)) {
+    int identifier = decodeInteger(packet.body);
+    List<int> payload = packet.body.sublist(6);
+    if (!controllers.containsKey(identifier)) {
       packet.body = [0];
     } else {
-      Controller c = controllers[packet.number];
+      Controller c = controllers[identifier];
       assert(c.slave == this);
-      c.slaveSend(packet.body);
+      c.slaveSend(payload);
       packet.body = [1];
     }
     _add(packet);

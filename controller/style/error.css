@@ -8,4 +8,5 @@
   opacity: 0;
   font-size: 2em;
   line-height: 2em;
+  pointer-events: none;
 }

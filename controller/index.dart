@@ -13,6 +13,7 @@ part 'src/session.dart';
 Animatable errorView;
 Animatable loaderView;
 Animatable authenticateView;
+Animatable controlsView;
 Animatable currentView;
 double animationDuration = 0.5;
 Session session;
@@ -38,7 +39,8 @@ void main() {
       propertyKeyframes('opacity', '0.0', '1.0'));
   authenticateView = new Animatable(querySelector('#authenticate'),
       propertyKeyframes('opacity', '0.0', '1.0', disableEvents: true));
-
+  controlsView = new Animatable(querySelector('#controls'),
+      propertyKeyframes('opacity', '0.0', '1.0', disableEvents: true));
   currentView = loaderView;
   
   window.onResize.listen(handleResize);
@@ -53,6 +55,7 @@ void main() {
     querySelector('#submit-passcode').onClick.listen(handleSubmit);
     
     session.stream.listen((List<int> data) {
+      print('got guy');
       handlePacket(new ClientPacket.decode(data));
     }, onDone: () {
       showError('Connection terminated');
@@ -89,7 +92,9 @@ void showView(Animatable nextView) {
 void handleSubmit(_) {
   showView(loaderView);
   InputElement field = querySelector('#passcode');
-  session.send(field.value.codeUnits).catchError((_) {});
+  List<int> req = new ClientPacket(ClientPacket.TYPE_PASSCODE,
+      field.value.codeUnits).encode();
+  session.send(req).catchError((_) {});
 }
 
 void handlePacket(ClientPacket packet) {
@@ -98,7 +103,7 @@ void handlePacket(ClientPacket packet) {
     if (packet.payload[0] == 0) {
       showError('Incorrect passcode');
     } else {
-      showError('TODO: control panel!');
+      showView(controlsView);
     }
   }
 }
