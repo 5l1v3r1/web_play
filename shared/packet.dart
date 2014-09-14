@@ -49,7 +49,7 @@ class Packet {
   
   List<int> encode() {
     List<int> result = [type];
-    result.addAll(encodeInteger(type));
+    result.addAll(encodeInteger(number));
     result.addAll(body);
     return result;
   }
