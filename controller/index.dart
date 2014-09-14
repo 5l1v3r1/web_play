@@ -1,11 +1,11 @@
-import 'shared/packet_connection.dart';
 import 'dart:html';
+import 'shared/websocket_url.dart';
 
-PacketConnection connection;
+WebSocket connection;
 
 void main() {
-  connection = new PacketConnection();
+  connection = new WebSocket(websocketUrl);
   connection.onMessage.listen((MessageEvent evt) {
-    print('event ${evt.data}');
+    print('got message');
   });
 }

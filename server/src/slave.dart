@@ -8,22 +8,22 @@ class Slave extends Identifiable {
   Slave(this.socket) {
     new SlavePool().add(this);
     socket.done.then(_hangup).catchError(_hangup);
-    socket.add(encodeInteger(identifier));
     socket.listen(_gotPacket);
+    _add(new Packet(Packet.TYPE_SLAVE_IDENTIFIER, identifier, []));
   }
   
   void controllerConnect(Controller c) {
     controllers[c.identifier] = c;
-    socket.add(buildPacket(PACKET_TYPE_CONNECT, c.identifier, []));
+    _add(new Packet(Packet.TYPE_CONNECT, c.identifier, []));
   }
   
   void controllerDisconnect(Controller c) {
     controllers.remove(c.identifier);
-    socket.add(buildPacket(PACKET_TYPE_DISCONNECT, c.identifier, []));
+    _add(new Packet(Packet.TYPE_DISCONNECT, c.identifier, []));
   }
   
   void controllerSend(Controller c, List<int> msg) {
-    socket.add(buildPacket(PACKET_TYPE_SEND_TO_SLAVE, c.identifier, msg));
+    _add(new Packet(Packet.TYPE_SEND_TO_SLAVE, c.identifier, msg));
   }
   
   void _hangup(_) {
@@ -31,25 +31,29 @@ class Slave extends Identifiable {
   }
   
   void _gotPacket(obj) {
-    if (!(obj is List<int>) || obj.length < 13) {
+    Packet packet;
+    try {
+      packet = new Packet.decode(obj);
+    } catch (e) {
       socket.close();
       return;
     }
-    List<int> packet = obj;
-    if (packet[0] != PACKET_TYPE_SEND_TO_CONTROLLER) {
+    if (packet.type != Packet.TYPE_SEND_TO_CONTROLLER) {
       socket.close();
       return;
     }
-    int seqId = decodeInteger(obj.sublist(1));
-    int slaveId = decodeInteger(obj.sublist(7));
-    List<int> body = obj.sublist(7);
-    if (!controllers.containsKey(slaveId)) {
-      socket.add(buildPacket(PACKET_TYPE_SEND_TO_CONTROLLER, seqId, [0]));
+    if (!controllers.containsKey(packet.number)) {
+      packet.body = [0];
     } else {
-      Controller c = controllers[slaveId];
+      Controller c = controllers[packet.number];
       assert(c.slave == this);
-      c.slaveSend(body);
-      socket.add(buildPacket(PACKET_TYPE_SEND_TO_CONTROLLER, seqId, [1]));
+      c.slaveSend(packet.body);
+      packet.body = [1];
     }
+    _add(packet);
+  }
+  
+  void _add(Packet packet) {
+    socket.add(packet.encode());
   }
 }

@@ -3,8 +3,7 @@ library web_play_server;
 import 'dart:io';
 import 'package:web_router/web_router.dart';
 import 'package:path/path.dart' as path_library;
-import 'shared/packing.dart';
-import 'shared/packet_type.dart';
+import 'shared/packet.dart';
 
 part 'src/slave.dart';
 part 'src/controller.dart';
@@ -18,12 +17,6 @@ String projectDirectory(String name) {
 
 String get packagesDirectory => projectDirectory('packages');
 String get sharedDirectory => projectDirectory('shared');
-
-int slaveCounter = 0;
-int controllerCounter = 0;
-
-Map<int, Controller> controllers = {};
-Map<int, Slave> slaves = {};
 
 void setupRoutes(Router router, String name) {
   // compile index.dart if necessary

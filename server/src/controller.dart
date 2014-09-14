@@ -17,8 +17,7 @@ class Controller extends Identifiable {
   }
   
   void slaveSend(List<int> data) {
-    socket.add(buildPacket(PACKET_TYPE_SEND_TO_CONTROLLER, slave.identifier,
-                           data));
+    _add(new Packet(Packet.TYPE_SEND_TO_CONTROLLER, slave.identifier, data));
   }
   
   void _hangup(_) {
@@ -28,56 +27,67 @@ class Controller extends Identifiable {
     }
   }
   
-  void _gotPacket(List<int> packet) {
-    if (packet.length < 7) {
+  void _gotPacket(List<int> data) {
+    Packet packet;
+    try {
+      packet = new Packet.decode(data);
+    } catch (_) {
       socket.close();
       return;
     }
-    int seqId = decodeInteger(packet.sublist(1));
-    List<int> body = packet.sublist(7);
-    if (packet[0] == PACKET_TYPE_CONNECT) {
-      _connectCommand(seqId, body);
-    } else if (packet[0] == PACKET_TYPE_DISCONNECT) {
-      _disconnectCommand(seqId, body);
-    } else if (packet[0] == PACKET_TYPE_SEND_TO_SLAVE) {
-      _sendCommand(seqId, body);
+    if (packet.type == Packet.TYPE_CONNECT) {
+      _connectCommand(packet);
+    } else if (packet.type == Packet.TYPE_DISCONNECT) {
+      _disconnectCommand(packet);
+    } else if (packet.type == Packet.TYPE_SEND_TO_SLAVE) {
+      _sendCommand(packet);
+    } else {
+      socket.close();
+      return;
     }
   }
   
-  void _connectCommand(int seqId, List<int> body) {
-    if (body.length != 6) {
+  void _connectCommand(Packet packet) {
+    if (packet.body.length != 6) {
       socket.close();
       return;
     }
-    int slaveId = decodeInteger(body);
-    slave = new SlavePool().find(slaveId);
+    slave = new SlavePool().find(decodeInteger(packet.body));
     if (slave == null) {
-      socket.add(buildPacket(PACKET_TYPE_CONNECT, seqId, [0]));
+      packet.body = [0];
     } else {
       slave.controllerConnect(this);
-      socket.add(buildPacket(PACKET_TYPE_CONNECT, seqId, [1]));
+      packet.body = [1];
     }
+    _add(packet);
   }
   
-  void _disconnectCommand(int seqId, List<int> body) {
-    if (body.length != 0) {
+  void _disconnectCommand(Packet packet) {
+    if (packet.body.length != 0) {
       socket.close();
       return;
     }
     if (slave == null) {
-      socket.add(buildPacket(PACKET_TYPE_DISCONNECT, seqId, [0]));
+      packet.body = [0];
     } else {
       slave.controllerDisconnect(this);
-      socket.add(buildPacket(PACKET_TYPE_DISCONNECT, seqId, [1]));
+      slave = null;
+      packet.body = [1];
     }
+    _add(packet);
   }
   
-  void _sendCommand(int seqId, List<int> body) {
+  void _sendCommand(Packet packet) {
     if (slave == null) {
-      socket.add(buildPacket(PACKET_TYPE_SEND_TO_SLAVE, seqId, [0]));
+      packet.body = [0];
     } else {
-      slave.controllerSend(this, body);
-      socket.add(buildPacket(PACKET_TYPE_SEND_TO_SLAVE, seqId, [1]));
+      slave.controllerSend(this, packet.body);
+      packet.body = [1];
     }
+    _add(packet);
+  }
+  
+  void _add(Packet p) {
+    socket.add(p.encode());
   }
 }

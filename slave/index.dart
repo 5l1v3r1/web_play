@@ -1,11 +1,24 @@
-import 'shared/packet_connection.dart';
+import 'shared/websocket_url.dart';
 import 'dart:html';
+import 'dart:typed_data';
 
-PacketConnection connection;
+WebSocket connection;
+List<int> identifier = null;
 
 void main() {
-  connection = new PacketConnection();
+  connection = new WebSocket(websocketUrl);
+  connection.binaryType = 'arraybuffer';
   connection.onMessage.listen((MessageEvent evt) {
-    print('event ${evt.data}');
+    var data = new Uint8List.view(evt.data);
+    print('data $data');
+  });
+  connection.onOpen.listen((_) {
+    querySelector('#status').innerHtml = 'Connected!';
+  });
+  connection.onError.listen((e) {
+    querySelector('#status').innerHtml = 'Encountered error $e';
+  });
+  connection.onClose.listen((_) {
+    querySelector('#status').innerHtml = 'Closed';
   });
 }
