@@ -7,3 +7,31 @@
   opacity: 0.0;
   pointer-events: none;
 }
+
+.arrow {
+  width: 4em;
+  height: 4em;
+  background-color: transparent;
+  border: none;
+  position: fixed;
+}
+
+#left-arrow {
+  left: calc(50% - 6em);
+  top: calc(50% - 2em);
+}
+
+#right-arrow {
+  left: calc(50% + 2em);
+  top: calc(50% - 2em);
+}
+
+#up-arrow {
+  left: calc(50% - 2em);
+  top: calc(50% - 6em);
+}
+
+#down-arrow {
+  left: calc(50% - 2em);
+  top: calc(50% + 2em);
+}

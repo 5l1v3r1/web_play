@@ -34,22 +34,16 @@ void main() {
   });
   session.onController.listen((Controller c) {
     c.onData.listen((List<int> data) {
-      print('got data $data');
       if (c != activeController && activeController != null) {
         return;
       }
+      ClientPacket packet;
       try {
-        ClientPacket packet = new ClientPacket.decode(data);
+        packet = new ClientPacket.decode(data);
         if (packet.type == ClientPacket.TYPE_PASSCODE) {
-          if (!checkPasscode(packet.payload)) {
-            packet.payload = [0];
-          } else {
-            packet.payload = [1];
-            activeController = c;
-            startPlaying();
-          }
-          print('sending response');
-          c.send(packet.encode()).catchError((_) {});
+          handlePasscodeAttempt(c, packet);
+        } else if (packet.type == ClientPacket.TYPE_ARROW) {
+          handleArrow(packet);
         }
       } catch (e) {
       }
@@ -96,4 +90,20 @@ void startService() {
 void startPlaying() {
   querySelector('#status').innerHtml = 'Connected to client ' +
       '${activeController.identifier}';
+}
+
+void handlePasscodeAttempt(Controller c, ClientPacket packet) {
+  if (!checkPasscode(packet.payload)) {
+    packet.payload = [0];
+  } else {
+    packet.payload = [1];
+    activeController = c;
+    startPlaying();
+  }
+  c.send(packet.encode()).catchError((_) {});
+}
+
+void handleArrow(ClientPacket packet) {
+  if (activeController == null) return;
+  querySelector('#status').innerHtml = 'arrow pressed ${packet.payload[0]}';
 }

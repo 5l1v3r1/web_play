@@ -55,7 +55,6 @@ void main() {
     querySelector('#submit-passcode').onClick.listen(handleSubmit);
     
     session.stream.listen((List<int> data) {
-      print('got guy');
       handlePacket(new ClientPacket.decode(data));
     }, onDone: () {
       showError('Connection terminated');
@@ -63,6 +62,8 @@ void main() {
   }).catchError((_) {
     showError('Connection failed');
   });
+  
+  registerArrows();
 }
 
 void handleResize(_) {
@@ -106,4 +107,23 @@ void handlePacket(ClientPacket packet) {
       showView(controlsView);
     }
   }
+}
+
+void registerArrows() {
+  Map<String, int> arrowNums = {'up': ClientPacket.ARROW_UP,
+                                'down': ClientPacket.ARROW_DOWN,
+                                'left': ClientPacket.ARROW_LEFT,
+                                'right': ClientPacket.ARROW_RIGHT};
+  for (String name in arrowNums.keys) {
+    Element e = querySelector('#${name}-arrow');
+    e.onClick.listen((_) => arrowPressed(arrowNums[name]));
+    e.onDragStart.listen((MouseEvent e) => e.preventDefault());
+  }
+}
+
+void arrowPressed(int arrow) {
+  print('pressed');
+  ClientPacket p = new ClientPacket(ClientPacket.TYPE_ARROW, [arrow]);
+  if (session == null) return;
+  session.send(p.encode()).catchError((_) {});
 }
