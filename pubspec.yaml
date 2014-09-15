@@ -4,4 +4,4 @@ dependencies:
   browser: any
   path: any
   presenter: 0.0.12
-  web_router: 0.0.5
+  web_router: 0.0.6
