@@ -46,8 +46,6 @@ void main(List<String> args) {
   String host = args.length > 1 ? args[1] : 'localhost';
   String relPath = args.length > 2 ? args[2] : '';
   
-  print('${Platform.executable}');
-  
   Router router = new Router();
   router.redirect(relPath, '$relPath/');
   router.staticFile('$relPath/', path_library.join(projectDirectory('server'),
