@@ -11,10 +11,13 @@ import 'package:path/path.dart' as path_library;
 
 part 'src/session.dart';
 part 'src/controller.dart';
+part 'src/tetris_board.dart';
+part 'src/tetris_view.dart';
 
 Session session;
 List<int> passcode = null;
 Controller activeController = null;
+TetrisView tetrisView = null;
 
 String get connectUrl {
   String rootPath = path_library.posix.dirname(window.location.pathname);
@@ -24,6 +27,7 @@ String get connectUrl {
 }
 
 void main() {
+  tetrisView = new TetrisView(querySelector('#canvas'));
   stopService();
   session = new Session();
   session.onDisconnect.listen((_) {
@@ -70,12 +74,14 @@ bool checkPasscode(List<int> attempt) {
 }
 
 void stopService() {
+  tetrisView.stop();
   activeController = null;
   querySelector('#status').innerHtml = 'Not connected';
   passcode = null;
 }
 
 void startService() {
+  tetrisView.stop();
   String tokens = 'WXZ0123456789';
   String key = '';
   Random r = new Random();
@@ -88,6 +94,8 @@ void startService() {
 }
 
 void startPlaying() {
+  tetrisView.board = new TetrisBoard(10, 20);
+  tetrisView.start();
   querySelector('#status').innerHtml = 'Connected to client ' +
       '${activeController.identifier}';
 }
@@ -105,5 +113,12 @@ void handlePasscodeAttempt(Controller c, ClientPacket packet) {
 
 void handleArrow(ClientPacket packet) {
   if (activeController == null) return;
-  querySelector('#status').innerHtml = 'arrow pressed ${packet.payload[0]}';
+  if (packet.payload[0] == ClientPacket.ARROW_LEFT) {
+    tetrisView.board.shift(-1);
+  } else if (packet.payload[0] == ClientPacket.ARROW_RIGHT) {
+    tetrisView.board.shift(1);
+  } else if (packet.payload[0] == ClientPacket.ARROW_DOWN) {
+    tetrisView.board.jumpDown();
+  }
+  tetrisView.draw();
 }
