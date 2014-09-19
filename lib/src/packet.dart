@@ -1,6 +1,4 @@
-library web_play_packet;
-
-import 'dart:typed_data';
+part of web_play;
 
 /**
  * Encode an integer as a 48-bit little-endian value.

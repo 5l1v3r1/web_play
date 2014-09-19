@@ -3,7 +3,7 @@ library web_play_server;
 import 'dart:io';
 import 'package:web_router/web_router.dart';
 import 'package:path/path.dart' as path_library;
-import 'shared/packet.dart';
+import 'package:web_play/web_play_server_lib.dart';
 
 part 'src/client.dart';
 part 'src/slave.dart';

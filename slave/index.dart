@@ -1,8 +1,6 @@
 library web_play_slave;
 
-import 'shared/websocket_url.dart';
-import 'shared/client_packet.dart';
-import 'shared/packet.dart';
+import 'package:web_play/web_play.dart';
 import 'dart:html';
 import 'dart:math';
 import 'dart:async';

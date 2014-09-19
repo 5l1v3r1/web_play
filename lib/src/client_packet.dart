@@ -1,4 +1,4 @@
-library web_play_client_packet;
+part of web_play;
 
 class ClientPacket {
   static const int TYPE_PASSCODE = 0;
