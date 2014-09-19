@@ -1,81 +1,82 @@
 part of web_play_server;
 
-class Controller extends Identifiable {
-  final WebSocket socket;
+/**
+ * A [Controller] is a [Client] which can connect to a [Slave] given its
+ * identifier.
+ */
+class Controller extends Client {
+  /**
+   * The [Slave] to which this [Controller] is currently connected, or `null`
+   * if it is not connected to anything.
+   */
   Slave slave = null;
   
-  Controller(this.socket) {
-    new ControllerPool().add(this);
-    socket.done.then(_hangup).catchError(_hangup);
-    socket.listen((obj) {
-      if (!(obj is List<int>)) {
-        socket.close();
-      } else {
-        _gotPacket(obj);
-      }
-    });
+  /**
+   * The global [ControllerPool]
+   */
+  Pool get pool => new ControllerPool();
+  
+  /**
+   * If [slave] is `null`, this will be an empty array. Otherwise, it will be
+   * an array containing [slave] as the only element.
+   */
+  Iterable<Client> get remotes => slave == null ? [] : [slave];
+  
+  Controller(WebSocket socket) : super(socket);
+  
+  void packetReceived(Packet packet) {
+    if (packet.type == Packet.TYPE_CONNECT) {
+      connect(packet);
+    } else if (packet.type == Packet.TYPE_SEND_TO_SLAVE) {
+      send(packet);
+    } else {
+      close();
+    }
   }
   
-  void slaveSend(List<int> data) {
-    _add(new Packet(Packet.TYPE_SEND_TO_CONTROLLER, slave.identifier, data));
-  }
-  
-  void slaveDisconnect() {
-    _add(new Packet(Packet.TYPE_SLAVE_DISCONNECT, slave.identifier, []));
+  void remoteDisconnected(Client client) {
+    assert(client == slave);
+    add(new Packet(Packet.TYPE_SLAVE_DISCONNECT, slave.identifier, []));
     slave = null;
   }
   
-  void _hangup(_) {
-    new ControllerPool().remove(this);
-    if (slave != null) {
-      slave.controllerDisconnect(this);
-    }
+  /**
+   * The [slave] has sent a message to this client.
+   */
+  void slaveSentMessage(List<int> data) {
+    assert(slave != null);
+    add(new Packet(Packet.TYPE_SEND_TO_CONTROLLER, slave.identifier, data)); 
   }
   
-  void _gotPacket(List<int> data) {
-    Packet packet;
-    try {
-      packet = new Packet.decode(data);
-    } catch (_) {
-      socket.close();
-      return;
-    }
-    if (packet.type == Packet.TYPE_CONNECT) {
-      _connectCommand(packet);
-    } else if (packet.type == Packet.TYPE_SEND_TO_SLAVE) {
-      _sendCommand(packet);
-    } else {
-      socket.close();
-      return;
-    }
-  }
-  
-  void _connectCommand(Packet packet) {
+  /**
+   * The [socket] has received a packet indicating that this controller wishes
+   * to connect to a specified [Slave].
+   */
+  void connect(Packet packet) {
     if (packet.body.length != 6) {
-      socket.close();
-      return;
+      return close();
     }
     slave = new SlavePool().find(decodeInteger(packet.body));
     if (slave == null) {
       packet.body = [0];
     } else {
-      slave.controllerConnect(this);
+      slave.controllerConnected(this);
       packet.body = [1];
     }
-    _add(packet);
+    add(packet);
   }
   
-  void _sendCommand(Packet packet) {
+  /**
+   * The [socket] has received a packet indicating that this controller wishes
+   * to send a [packet] to the current [slave].
+   */
+  void send(Packet packet) {
     if (slave == null) {
       packet.body = [0];
     } else {
-      slave.controllerSend(this, packet.body);
+      slave.controllerSentMessage(this, packet.body);
       packet.body = [1];
     }
-    _add(packet);
-  }
-  
-  void _add(Packet p) {
-    socket.add(p.encode());
+    add(packet);
   }
 }

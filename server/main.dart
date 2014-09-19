@@ -5,6 +5,7 @@ import 'package:web_router/web_router.dart';
 import 'package:path/path.dart' as path_library;
 import 'shared/packet.dart';
 
+part 'src/client.dart';
 part 'src/slave.dart';
 part 'src/controller.dart';
 part 'src/pools.dart';

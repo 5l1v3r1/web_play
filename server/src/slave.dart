@@ -1,66 +1,74 @@
 part of web_play_server;
 
-class Slave extends Identifiable {
-  final WebSocket socket;
-  int identifier;
+/**
+ * A [Slave] is a [Client] which can be connected to multiple [Controller]s
+ * simultaneously.
+ */
+class Slave extends Client {
+  /**
+   * A map of [Controller]s that are currently connected to this [Slave].
+   */
   Map<int, Controller> controllers = {};
   
-  Slave(this.socket) {
-    new SlavePool().add(this);
-    socket.done.then(_hangup).catchError(_hangup);
-    socket.listen(_gotPacket);
-    _add(new Packet(Packet.TYPE_SLAVE_IDENTIFIER, identifier, []));
+  /**
+   * The global [SlavePool]
+   */
+  Pool get pool => new SlavePool();
+  
+  /**
+   * An iterable list containing the values of the [controllers] map
+   */
+  Iterable<Client> get remotes => controllers.values;
+  
+  /**
+   * Create a [Slave] with a given [socket]. The identifier that this
+   * initializer generates will automatically be sent to the [socket].
+   */
+  Slave(WebSocket socket) : super(socket) {
+    add(new Packet(Packet.TYPE_SLAVE_IDENTIFIER, identifier, []));
   }
   
-  void controllerConnect(Controller c) {
-    controllers[c.identifier] = c;
-    _add(new Packet(Packet.TYPE_CONNECT, c.identifier, []));
-  }
-  
-  void controllerDisconnect(Controller c) {
-    controllers.remove(c.identifier);
-    _add(new Packet(Packet.TYPE_CONTROLLER_DISCONNECT, c.identifier, []));
-  }
-  
-  void controllerSend(Controller c, List<int> msg) {
-    _add(new Packet(Packet.TYPE_SEND_TO_SLAVE, c.identifier, msg));
-  }
-  
-  void _hangup(_) {
-    for (Controller c in controllers.values) {
-      assert(c.slave == this);
-      c.slaveDisconnect();
-    }
-    new SlavePool().remove(this);
-  }
-  
-  void _gotPacket(obj) {
-    Packet packet;
-    try {
-      packet = new Packet.decode(obj);
-    } catch (e) {
-      socket.close();
-      return;
-    }
+  /**
+   * Handle a "send to controller" packet. If [packet] is not of such a type,
+   * the connection will be terminated.
+   */
+  void packetReceived(Packet packet) {
     if (packet.type != Packet.TYPE_SEND_TO_CONTROLLER ||
         packet.body.length < 6) {
-      socket.close();
-      return;
+      return close();
     }
     int identifier = decodeInteger(packet.body);
     List<int> payload = packet.body.sublist(6);
     if (!controllers.containsKey(identifier)) {
       packet.body = [0];
     } else {
-      Controller c = controllers[identifier];
-      assert(c.slave == this);
-      c.slaveSend(payload);
+      Controller controller = controllers[identifier];
+      assert(controller.slave == this);
+      controller.slaveSentMessage(payload);
       packet.body = [1];
     }
-    _add(packet);
+    add(packet);
   }
   
-  void _add(Packet packet) {
-    socket.add(packet.encode());
+  void remoteDisconnected(Client client) {
+    assert(controllers.containsKey(client.identifier));
+    controllers.remove(client.identifier);
+    add(new Packet(Packet.TYPE_CONTROLLER_DISCONNECT, client.identifier, []));
+  }
+  
+  /**
+   * A [controller] has requested to be connected to this [Slave].
+   */
+  void controllerConnected(Controller controller) {
+    controllers[controller.identifier] = controller;
+    add(new Packet(Packet.TYPE_CONNECT, controller.identifier, []));
+  }
+  
+  /**
+   * A [controller] is connected to this [Slave] and has sent a message [msg]
+   * to it.
+   */
+  void controllerSentMessage(Controller controller, List<int> msg) {
+    add(new Packet(Packet.TYPE_SEND_TO_SLAVE, controller.identifier, msg));
   }
 }
