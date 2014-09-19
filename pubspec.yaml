@@ -1,7 +1,10 @@
 name: web_play
-description: A sample command-line application
+version: 0.0.1
+author: Alex Nichol <unixpickle@gmail.com>
+description: A websockets-based networked online game
+homepage: https://github.com/unixpickle/web_play
 dependencies:
   browser: any
   path: any
   presenter: 0.0.12
-  web_router: 0.0.6
+  web_router: '>=0.0.7 <0.1.0'
