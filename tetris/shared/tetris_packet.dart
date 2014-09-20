@@ -1,6 +1,6 @@
-library web_play_client_packet;
+library web_play_tetris_packet;
 
-class ClientPacket {
+class TetrisPacket {
   static const int TYPE_PASSCODE = 0;
   static const int TYPE_ARROW = 1;
   
@@ -12,9 +12,9 @@ class ClientPacket {
   int type;
   List<int> payload;
   
-  ClientPacket(this.type, this.payload);
+  TetrisPacket(this.type, this.payload);
   
-  ClientPacket.decode(List<int> data) {
+  TetrisPacket.decode(List<int> data) {
     if (data.length == 0) {
       throw new FormatException('message must be at least one byte');
     }

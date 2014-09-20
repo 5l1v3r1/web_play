@@ -1,19 +1,21 @@
-library web_play_slave;
+library web_play_tetris;
 
 import 'dart:html';
 import 'dart:math';
 import 'dart:async';
 import 'package:path/path.dart' as path_library;
 import 'package:web_play/web_play.dart';
-import 'shared/client_packet.dart';
+import 'shared/tetris_packet.dart';
 
-part 'src/tetris_board.dart';
-part 'src/tetris_view.dart';
+part 'src/tetromino.dart';
+part 'src/static_board.dart';
+part 'src/board.dart';
+part 'src/board_view.dart';
 
 PasscodeManager passcode;
+BoardView boardView;
 PersistentSlave session = null;
 SlaveController activeController = null;
-TetrisView tetrisView = null;
 
 String get connectUrl {
   assert(session.session != null);
@@ -24,8 +26,9 @@ String get connectUrl {
 }
 
 void main() {
+  boardView = new BoardView(querySelector('#tetris-view'),
+      querySelector('#tetromino-preview'));
   passcode = new PasscodeManager();
-  tetrisView = new TetrisView(querySelector('#canvas'));
   stopService();
   session = new PersistentSlave();
   session.onClose.listen((_) {
@@ -39,12 +42,12 @@ void main() {
       if (c != activeController && activeController != null) {
         return;
       }
-      ClientPacket packet;
+      TetrisPacket packet;
       try {
-        packet = new ClientPacket.decode(data);
-        if (packet.type == ClientPacket.TYPE_PASSCODE) {
+        packet = new TetrisPacket.decode(data);
+        if (packet.type == TetrisPacket.TYPE_PASSCODE) {
           handlePasscodeAttempt(c, packet);
-        } else if (packet.type == ClientPacket.TYPE_ARROW) {
+        } else if (packet.type == TetrisPacket.TYPE_ARROW) {
           handleArrow(packet);
         }
       } catch (e) {
@@ -60,27 +63,29 @@ void main() {
 
 void stopService() {
   passcode.clear();
-  tetrisView.stop();
+  boardView.stop();
   activeController = null;
   querySelector('#status').innerHtml = 'Not connected';
 }
 
 void startService() {
-  tetrisView.stop();
   passcode.generate();
+  boardView.stop();
   querySelector('#status').innerHtml = 'To connect, go to <b>' + connectUrl +
       '</b> and type the passcode: <b>${passcode.passcodeString}</b>';
 }
 
 void startPlaying() {
   passcode.clear();
-  tetrisView.board = new TetrisBoard(10, 20);
-  tetrisView.start();
   querySelector('#status').innerHtml = 'Connected to client ' +
       '${activeController.identifier}';
+  boardView.play(new Board(10, 20)).then((_) {
+    // TODO: implement a way to disconnect the client
+    print('game over');
+  });
 }
 
-void handlePasscodeAttempt(SlaveController c, ClientPacket packet) {
+void handlePasscodeAttempt(SlaveController c, TetrisPacket packet) {
   if (!passcode.check(packet.payload)) {
     packet.payload = [0];
   } else {
@@ -91,14 +96,24 @@ void handlePasscodeAttempt(SlaveController c, ClientPacket packet) {
   c.sendToController(packet.encode()).catchError((_) {});
 }
 
-void handleArrow(ClientPacket packet) {
+void handleArrow(TetrisPacket packet) {
+  // make sure we are actually playing a game!
   if (activeController == null) return;
-  if (packet.payload[0] == ClientPacket.ARROW_LEFT) {
-    tetrisView.board.shift(-1);
-  } else if (packet.payload[0] == ClientPacket.ARROW_RIGHT) {
-    tetrisView.board.shift(1);
-  } else if (packet.payload[0] == ClientPacket.ARROW_DOWN) {
-    tetrisView.board.jumpDown();
+  if (boardView.board == null) return;
+  if (packet.payload.length != 1) return;
+  
+  int arrow = packet.payload[0];
+  if (arrow == TetrisPacket.ARROW_LEFT) {
+    boardView.board.translate(false);
+  } else if (arrow == TetrisPacket.ARROW_RIGHT) {
+    boardView.board.translate(true);
+  } else if (arrow == TetrisPacket.ARROW_UP) {
+    boardView.board.turn();
+  } else if (arrow == TetrisPacket.ARROW_DOWN) {
+    boardView.board.drop();
+  } else {
+    // avoid calling boardView.draw() for no reason
+    return;
   }
-  tetrisView.draw();
+  boardView.draw();
 }

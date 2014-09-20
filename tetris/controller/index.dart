@@ -1,9 +1,6 @@
-library web_play_controller;
-
 import 'dart:html';
-import 'package:presenter/presenter.dart';
 import 'package:web_play/web_play.dart';
-import 'shared/client_packet.dart';
+import 'shared/tetris_packet.dart';
 
 ControllerSession currentSession = null;
 
@@ -18,10 +15,10 @@ void main() {
 }
 
 void registerArrows() {
-  Map<String, int> arrowNums = {'up': ClientPacket.ARROW_UP,
-                                'down': ClientPacket.ARROW_DOWN,
-                                'left': ClientPacket.ARROW_LEFT,
-                                'right': ClientPacket.ARROW_RIGHT};
+  Map<String, int> arrowNums = {'up': TetrisPacket.ARROW_UP,
+                                'down': TetrisPacket.ARROW_DOWN,
+                                'left': TetrisPacket.ARROW_LEFT,
+                                'right': TetrisPacket.ARROW_RIGHT};
   for (String name in arrowNums.keys) {
     Element e = querySelector('#${name}-arrow');
     e.onClick.listen((_) => arrowPressed(arrowNums[name]));
@@ -31,6 +28,6 @@ void registerArrows() {
 
 void arrowPressed(int arrow) {
   if (currentSession == null) return;
-  ClientPacket p = new ClientPacket(ClientPacket.TYPE_ARROW, [arrow]);
+  TetrisPacket p = new TetrisPacket(TetrisPacket.TYPE_ARROW, [arrow]);
   currentSession.sendToSlave(p.encode()).catchError((_) {});
 }
