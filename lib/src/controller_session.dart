@@ -45,8 +45,8 @@ class ControllerSession extends Session {
    * Connect to a slave given its [slaveId].
    * 
    * The returned future may fail with a [ControllerSessionClosedError], a
-   * [ControllerSessionNoSlaveError], a [ControllerSessionNegotiationError], or
-   * a [SessionConnectError].
+   * [ControllerSessionNoSlaveError], a [ControllerSessionNegotiationError], a
+   * a [SessionConnectError], or a [FormatException].
    */
   static Future<ControllerSession> connect(int slaveId) {
     return Session.connect().then((WebSocket socket) {
@@ -102,6 +102,9 @@ class ControllerSession extends Session {
    * [ControllerSessionNoSlaveError].
    */
   Future sendToSlave(List<int> packet) {
+    if (!connected) {
+      return new Future.error(new ControllerSessionClosedError());
+    }
     int seqNumber = _messageSequence++;
     Completer c = new Completer();
     _pending[seqNumber] = c;
@@ -136,5 +139,6 @@ class ControllerSession extends Session {
     for (Completer c in _pending.values) {
       c.completeError(new ControllerSessionClosedError());
     }
+    _controller.close();
   }
 }

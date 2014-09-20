@@ -7,35 +7,34 @@ import 'package:path/path.dart' as path_library;
 import 'package:web_play/web_play.dart';
 import 'shared/client_packet.dart';
 
-part 'src/session.dart';
-part 'src/controller.dart';
 part 'src/tetris_board.dart';
 part 'src/tetris_view.dart';
 
-Session session;
 List<int> passcode = null;
-Controller activeController = null;
+PersistentSlave session = null;
+SlaveController activeController = null;
 TetrisView tetrisView = null;
 
 String get connectUrl {
+  assert(session.session != null);
   String rootPath = path_library.posix.dirname(window.location.pathname);
   String controllerPath = path_library.posix.join(rootPath, 'c');
   return window.location.protocol + '//' + window.location.host +
-      controllerPath + '/?s=${session.identifier}';
+      controllerPath + '/?s=${session.session.identifier}';
 }
 
 void main() {
   tetrisView = new TetrisView(querySelector('#canvas'));
   stopService();
-  session = new Session();
-  session.onDisconnect.listen((_) {
+  session = new PersistentSlave();
+  session.onClose.listen((_) {
     stopService();
   });
-  session.onIdentify.listen((id) {
+  session.onIdentifierReceived.listen((id) {
     startService();
   });
-  session.onController.listen((Controller c) {
-    c.onData.listen((List<int> data) {
+  session.onControllerConnected.listen((SlaveController c) {
+    c.stream.listen((List<int> data) {
       if (c != activeController && activeController != null) {
         return;
       }
@@ -98,7 +97,7 @@ void startPlaying() {
       '${activeController.identifier}';
 }
 
-void handlePasscodeAttempt(Controller c, ClientPacket packet) {
+void handlePasscodeAttempt(SlaveController c, ClientPacket packet) {
   if (!checkPasscode(packet.payload)) {
     packet.payload = [0];
   } else {
@@ -106,7 +105,7 @@ void handlePasscodeAttempt(Controller c, ClientPacket packet) {
     activeController = c;
     startPlaying();
   }
-  c.send(packet.encode()).catchError((_) {});
+  c.sendToController(packet.encode()).catchError((_) {});
 }
 
 void handleArrow(ClientPacket packet) {
