@@ -5,8 +5,7 @@ import 'dart:math';
 import 'dart:async';
 import 'package:presenter/presenter.dart';
 import 'package:web_play/web_play.dart';
-
-part 'src/session.dart';
+import 'shared/client_packet.dart';
 
 Animatable errorView;
 Animatable loaderView;
@@ -14,7 +13,7 @@ Animatable authenticateView;
 Animatable controlsView;
 Animatable currentView;
 double animationDuration = 0.5;
-Session session;
+ControllerSession session;
 Future transitionDone = new Future(() => null);
 
 int readQueryServerId() {
@@ -47,17 +46,17 @@ void main() {
   int serverId = readQueryServerId();
   if (serverId < 0) return;
   
-  Session.connect(serverId).then((Session s) {
+  ControllerSession.connect(serverId).then((ControllerSession s) {
     session = s;
     showView(authenticateView);
     querySelector('#submit-passcode').onClick.listen(handleSubmit);
     
-    session.stream.listen((List<int> data) {
+    session.onSlaveMessage.listen((List<int> data) {
       handlePacket(new ClientPacket.decode(data));
     }, onDone: () {
       showError('Connection terminated');
     });
-  }).catchError((_) {
+  }).catchError((e) {
     showError('Connection failed');
   });
   
@@ -93,7 +92,7 @@ void handleSubmit(_) {
   InputElement field = querySelector('#passcode');
   List<int> req = new ClientPacket(ClientPacket.TYPE_PASSCODE,
       field.value.codeUnits).encode();
-  session.send(req).catchError((_) {});
+  session.sendToSlave(req).catchError((_) {});
 }
 
 void handlePacket(ClientPacket packet) {
@@ -120,8 +119,7 @@ void registerArrows() {
 }
 
 void arrowPressed(int arrow) {
-  print('pressed');
   ClientPacket p = new ClientPacket(ClientPacket.TYPE_ARROW, [arrow]);
   if (session == null) return;
-  session.send(p.encode()).catchError((_) {});
+  session.sendToSlave(p.encode()).catchError((_) {});
 }

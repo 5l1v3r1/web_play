@@ -1,11 +1,11 @@
 library web_play_slave;
 
-import 'package:web_play/web_play.dart';
 import 'dart:html';
 import 'dart:math';
 import 'dart:async';
-
 import 'package:path/path.dart' as path_library;
+import 'package:web_play/web_play.dart';
+import 'shared/client_packet.dart';
 
 part 'src/session.dart';
 part 'src/controller.dart';
@@ -19,7 +19,7 @@ TetrisView tetrisView = null;
 
 String get connectUrl {
   String rootPath = path_library.posix.dirname(window.location.pathname);
-  String controllerPath = path_library.posix.join(rootPath, 'controller');
+  String controllerPath = path_library.posix.join(rootPath, 'c');
   return window.location.protocol + '//' + window.location.host +
       controllerPath + '/?s=${session.identifier}';
 }

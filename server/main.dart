@@ -3,38 +3,53 @@ library web_play_server;
 import 'dart:io';
 import 'package:web_router/web_router.dart';
 import 'package:path/path.dart' as path_library;
-import 'package:web_play/web_play_server_lib.dart';
+import 'package:web_play/server_lib.dart';
 
 part 'src/client.dart';
 part 'src/slave.dart';
 part 'src/controller.dart';
 part 'src/pools.dart';
 
-String projectDirectory(String name) {
+String projectFile(String dirName, [List<String> components = null]) {
   String scriptDir = path_library.dirname(Platform.script.path);
-  String abnormal = path_library.join(scriptDir, '..', name);
+  String abnormal = path_library.join(scriptDir, '..', dirName);
+  if (components != null) {
+    for (String comp in components) {
+      abnormal = path_library.join(abnormal, comp);
+    }
+  }
   return path_library.normalize(abnormal);
 }
 
-String get packagesDirectory => projectDirectory('packages');
-String get sharedDirectory => projectDirectory('shared');
+String get packagesDirectory => projectFile('packages');
 
-void setupRoutes(Router router, String relPath, String name) {
-  // compile index.dart if necessary
-  router.add(new Dart2JSPathRoute('$relPath/$name/index.dart.js', 'GET', true,
-      path_library.join(projectDirectory(name), 'index.dart')));
+void routeGame(Router router, String relPath, String game) {
+  // serve Dart2JS sources
+  router.dart2js('$relPath/$game/c/index.dart.js', projectFile(game,
+      ['controller', 'index.dart']));
+  router.dart2js('$relPath/$game/s/index.dart.js', projectFile(game,
+      ['slave', 'index.dart']));
   
-  // serve index file
-  router.redirect('$relPath/$name', '$relPath/$name/');
-  router.staticFile('$relPath/$name/',
-      path_library.join(projectDirectory(name), 'index.html'));
+  // page redirects; force all pages to be directories
+  router.redirect('$relPath/$game', '$relPath/$game/s/');
+  router.redirect('$relPath/$game/', '$relPath/$game/s/');
+  router.redirect('$relPath/$game/s', '$relPath/$game/s/');
+  router.redirect('$relPath/$game/c', '$relPath/$game/c/');
+  
+  // serve the index files of both pages
+  router.staticFile('$relPath/$game/s/', projectFile(game, ['slave',
+      'index.html']));
+  router.staticFile('$relPath/$game/c/', projectFile(game, ['controller',
+      'index.html']));
   
   // serve packages directory
-  router.staticDirectory('$relPath/$name/shared', sharedDirectory);
-  router.staticDirectory('$relPath/$name/packages', packagesDirectory);
+  router.staticDirectory('$relPath/$game/c/packages', packagesDirectory);
+  router.staticDirectory('$relPath/$game/s/packages', packagesDirectory);
   
-  // serve the rest of the directory contents normally
-  router.staticDirectory('$relPath/$name', projectDirectory(name));
+  // serve the full contents of both directories
+  router.staticDirectory('$relPath/$game/s/', projectFile(game, ['slave']));
+  router.staticDirectory('$relPath/$game/c/', projectFile(game,
+      ['controller']));
 }
 
 void main(List<String> args) {
@@ -49,14 +64,13 @@ void main(List<String> args) {
   
   Router router = new Router();
   router.redirect(relPath, '$relPath/');
-  router.staticFile('$relPath/', path_library.join(projectDirectory('server'),
-      'root_page.html'));
+  router.staticFile('$relPath/', projectFile('server', ['index.html']));
   
-  router.get('$relPath/slave/websocket', slaveWebsocket);
-  router.get('$relPath/controller/websocket', controllerWebsocket);
-  
-  setupRoutes(router, relPath, 'controller');
-  setupRoutes(router, relPath, 'slave');
+  for (String game in ['tetris']) {
+    router.get('$relPath/$game/s/websocket', slaveWebsocket);
+    router.get('$relPath/$game/c/websocket', controllerWebsocket);
+    routeGame(router, relPath, game);
+  }
   
   HttpServer.bind(host, port).then((HttpServer server) {
     print('Application listening on http://$host:$port$relPath');
