@@ -135,7 +135,7 @@ class SlaveSession extends Session {
    * Called when [socket] has been closed. You should not call this directly.
    */
   void disconnected() {
-    for (Completer c in _pending) {
+    for (Completer c in _pending.values) {
       c.completeError(new SlaveSessionClosedError());
     }
     for (SlaveController controller in controllers) {
