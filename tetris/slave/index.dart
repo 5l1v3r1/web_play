@@ -10,7 +10,7 @@ import 'shared/client_packet.dart';
 part 'src/tetris_board.dart';
 part 'src/tetris_view.dart';
 
-List<int> passcode = null;
+PasscodeManager passcode;
 PersistentSlave session = null;
 SlaveController activeController = null;
 TetrisView tetrisView = null;
@@ -24,6 +24,7 @@ String get connectUrl {
 }
 
 void main() {
+  passcode = new PasscodeManager();
   tetrisView = new TetrisView(querySelector('#canvas'));
   stopService();
   session = new PersistentSlave();
@@ -57,40 +58,22 @@ void main() {
   });
 }
 
-bool checkPasscode(List<int> attempt) {
-  if (passcode == null) return false;
-  if (attempt.length != passcode.length) {
-    return false;
-  }
-  for (int i = 0; i < attempt.length; ++i) {
-    if (attempt[i] != passcode[i]) {
-      return false;
-    }
-  }
-  return true;
-}
-
 void stopService() {
+  passcode.clear();
   tetrisView.stop();
   activeController = null;
   querySelector('#status').innerHtml = 'Not connected';
-  passcode = null;
 }
 
 void startService() {
   tetrisView.stop();
-  String tokens = 'WXZ0123456789';
-  String key = '';
-  Random r = new Random();
-  for (int i = 0; i < 4; ++i) {
-    key += tokens[r.nextInt(tokens.length)];
-  }
+  passcode.generate();
   querySelector('#status').innerHtml = 'To connect, go to <b>' + connectUrl +
-      '</b> and type the passcode: <b>$key</b>';
-  passcode = key.codeUnits;
+      '</b> and type the passcode: <b>${passcode.passcodeString}</b>';
 }
 
 void startPlaying() {
+  passcode.clear();
   tetrisView.board = new TetrisBoard(10, 20);
   tetrisView.start();
   querySelector('#status').innerHtml = 'Connected to client ' +
@@ -98,7 +81,7 @@ void startPlaying() {
 }
 
 void handlePasscodeAttempt(SlaveController c, ClientPacket packet) {
-  if (!checkPasscode(packet.payload)) {
+  if (!passcode.check(packet.payload)) {
     packet.payload = [0];
   } else {
     packet.payload = [1];

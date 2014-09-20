@@ -1,3 +1,7 @@
+/**
+ * This library provides APIs which help implement slaves and controllers which
+ * are compatible with the web_play websockets interface.
+ */
 library web_play;
 
 import 'dart:html';
@@ -15,3 +19,4 @@ part 'src/slave_session.dart';
 part 'src/slave_controller.dart';
 part 'src/persistent_slave.dart';
 part 'src/controller_ui.dart';
+part 'src/passcode_manager.dart';
