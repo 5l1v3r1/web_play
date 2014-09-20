@@ -88,8 +88,8 @@ class BoardView {
         } else {
           continue;
         }
-        gameContext.fillRect(x * gameBlockWidth, y * gameBlockHeight,
-                             gameBlockWidth, gameBlockHeight);
+        gameContext.fillRect(x * gameBlockWidth + 1, y * gameBlockHeight + 1,
+                             gameBlockWidth - 2, gameBlockHeight - 2);
       }
     }
     
@@ -100,20 +100,20 @@ class BoardView {
         if (!nf.hitTest(x + nf.x, y + nf.y)) {
           continue;
         }
-        previewContext.fillRect(x * previewBlockWidth, y * previewBlockHeight,
-                             previewBlockWidth, previewBlockHeight);
+        previewContext.fillRect(x * previewBlockWidth + 1,
+                                y * previewBlockHeight + 1,
+                                previewBlockWidth - 2, previewBlockHeight - 2);
       }
     }
   }
   
   String typeFillStyle(int type, bool proj) {
-    print('type is $type');
     // for now, i'll do this lame thing
     if (proj) {
       return '#333';
     } else {
-      return ['#0000FF', '#3344FF', '#00FF00', '#FF0000', '#FFFF00',
-              '#00FFFF', '#FF00FF'][type];
+      return ['#30FFFF', '#0A21EC', '#EFA026', '#FFFF34', '#26EE2B',
+              '#EE0C19', '#A023ED'][type];
     }
   }
 }
