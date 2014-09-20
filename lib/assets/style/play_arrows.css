@@ -14,24 +14,29 @@
   background-color: transparent;
   border: none;
   position: fixed;
+  background-size: 100% 100%;
 }
 
 #left-arrow {
   left: calc(50% - 6em);
   top: calc(50% - 2em);
+  background-image: url('../images/arrow-left.png');
 }
 
 #right-arrow {
   left: calc(50% + 2em);
   top: calc(50% - 2em);
+  background-image: url('../images/arrow-right.png');
 }
 
 #up-arrow {
   left: calc(50% - 2em);
   top: calc(50% - 6em);
+  background-image: url('../images/arrow-up.png');
 }
 
 #down-arrow {
   left: calc(50% - 2em);
   top: calc(50% + 2em);
+  background-image: url('../images/arrow-down.png');
 }

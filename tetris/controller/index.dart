@@ -64,7 +64,6 @@ void registerArrows() {
       e.onMouseUp.listen(clickEnd);
       e.onMouseLeave.listen(clickEnd);
       e.onMouseOut.listen(clickEnd);
-      e.onDragStart.listen((MouseEvent e) => e.preventDefault());
     }
   }
 }
