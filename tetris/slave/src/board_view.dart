@@ -9,7 +9,7 @@ class BoardView {
   
   Board _board = null;
   Timer _animation = null;
-  Completer _lossCompleter = null;
+  Completer<bool> _lossCompleter = null;
   
   Board get board => _board;
   
@@ -22,17 +22,19 @@ class BoardView {
    * Run the game of tetris.
    * 
    * The returned future finishes either when the user loses the game of tetris
-   * or when [stop] is called on this instance.
+   * or when [stop] is called on this instance. The [bool] that the future
+   * returns will be `true` if the game was lost or [stop] was passed an
+   * explicit `true` argument.
    */
-  Future play(Board b) {
-    _lossCompleter = new Completer();
+  Future<bool> play(Board b) {
+    _lossCompleter = new Completer<bool>();
     if (_animation != null) {
       return new Future(() => null);
     }
     _board = b;
     _animation = new Timer.periodic(new Duration(seconds: 1), (_) {
       if (!_board.move()) {
-        stop();
+        stop(true);
       } else {
         draw();
       }
@@ -44,12 +46,12 @@ class BoardView {
    * Stop the current game. If no game is being played, calling [stop] does
    * nothing.
    */
-  void stop() {
+  void stop([bool lost = false]) {
     if (_animation == null) return;
     _animation.cancel();
     _animation = null;
     _board = null;
-    _lossCompleter.complete();
+    _lossCompleter.complete(lost);
     _lossCompleter = null;
     draw();
   }

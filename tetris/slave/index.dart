@@ -79,9 +79,11 @@ void startPlaying() {
   passcode.clear();
   querySelector('#status').innerHtml = 'Connected to client ' +
       '${activeController.identifier}';
-  boardView.play(new Board(10, 20)).then((_) {
-    // TODO: implement a way to disconnect the client
-    print('game over');
+  boardView.play(new Board(10, 20)).then((bool lost) {
+    if (lost) {
+      var packet = new TetrisPacket(TetrisPacket.TYPE_LOST, []);
+      activeController.sendToController(packet.encode());
+    }
   });
 }
 
@@ -110,7 +112,7 @@ void handleArrow(TetrisPacket packet) {
   } else if (arrow == TetrisPacket.ARROW_UP) {
     boardView.board.turn();
   } else if (arrow == TetrisPacket.ARROW_DOWN) {
-    boardView.board.drop();
+    boardView.board.accelerate();
   } else {
     // avoid calling boardView.draw() for no reason
     return;

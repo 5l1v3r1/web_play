@@ -95,11 +95,11 @@ class Board extends StaticBoard {
   }
   
   /**
-   * Push the current falling block down as far as it can go.
+   * Push the current falling block down by one space
    */
-  void drop() {
+  void accelerate() {
     if (_falling == null) return;
-    while (_lowerBlock());
+    _lowerBlock();
   }
   
   void _generateProjection() {
