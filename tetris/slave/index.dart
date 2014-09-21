@@ -41,6 +41,7 @@ void stateChange(_) {
         slave.controllerUrl + '</b> and type the passcode: <b>' +
         slave.passcodeString + '</b>';
   } else {
+    querySelector('#status').innerHtml = 'Playing!';
     boardView.play(new Board(10, 20)).then((bool lost) {
       if (lost) {
         var packet = new ArrowPacket(ArrowPacket.TYPE_LOST, []);
