@@ -2,7 +2,6 @@ library web_play_snake;
 
 import 'dart:html';
 import 'dart:math';
-import 'dart:async';
 import 'package:web_play/web_play.dart';
 
 part 'src/snake.dart';
@@ -35,25 +34,31 @@ void stateChange(_) {
     querySelector('#status').innerHtml = 'Not connected';
   } else if (slave.state == SingularSlave.STATE_WAITING) {
     snakeView.stop();
-    querySelector('#status').innerHtml = 'To connect, go to <b>' +
-        slave.controllerUrl + '</b> and type the passcode: <b>' +
+    querySelector('#status').innerHtml = 'URL: <b>' +
+        slave.controllerUrl + '</b><br />Passcode: <b>' +
         slave.passcodeString + '</b>';
   } else {
-    querySelector('#status').innerHtml = 'Playing!';
-    snakeView.play(new SnakeBoard(25, 25)).then((bool lost) {
-      if (lost) {
-        var packet = new ArrowPacket(ArrowPacket.TYPE_LOST, []);
-        slave.sendToController(packet.encode()).catchError((_) {});
-      }
-    });
+    querySelector('#status').innerHtml = 'Establishing...';
   }
 }
 
 void handleArrow(ArrowPacket packet) {
-  if (snakeView.board == null) return;
+  if (packet.type == ArrowPacket.TYPE_READY) {
+    querySelector('#status').innerHtml = 'Playing!';
+    snakeView.play(new SnakeBoard(25, 25)).then(gameOver);
+    return;
+  }
+  
+  if (snakeView.state == null) return;
   if (packet.type != ArrowPacket.TYPE_ARROW) return;
   if (packet.payload.length != 1) return;
   if (packet.payload[0] < 0 || packet.payload[0] > 3) return;
   
-  snakeView.board.turn(packet.payload[0]);
+  snakeView.state.turn(packet.payload[0]);
+}
+
+void gameOver(bool lost) {
+  if (!lost) return;
+  var packet = new ArrowPacket(ArrowPacket.TYPE_LOST, []);
+  slave.sendToController(packet.encode()).catchError((_) {});
 }

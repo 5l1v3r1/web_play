@@ -60,6 +60,12 @@ class ControllerUI {
             _showError('Connection terminated');
           });
           _showView(_playView);
+          // wait until the controls are fully visible before we tell the
+          // remote end we are ready
+          _transitionDone = _transitionDone.then((_) {
+            var packet = new ArrowPacket(ArrowPacket.TYPE_READY, []).encode();
+            _session.sendToSlave(packet).catchError(() {});
+          });
         }
       }).catchError((_) {});
     }).catchError((e) {

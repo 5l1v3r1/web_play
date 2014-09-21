@@ -37,36 +37,42 @@ void stateChange(_) {
     querySelector('#status').innerHtml = 'Not connected';
   } else if (slave.state == SingularSlave.STATE_WAITING) {
     boardView.stop();
-    querySelector('#status').innerHtml = 'To connect, go to <b>' +
-        slave.controllerUrl + '</b> and type the passcode: <b>' +
+    querySelector('#status').innerHtml = 'URL: <b>' +
+        slave.controllerUrl + '</b><br />Passcode: <b>' +
         slave.passcodeString + '</b>';
   } else {
-    querySelector('#status').innerHtml = 'Playing!';
-    boardView.play(new Board(10, 20)).then((bool lost) {
-      if (lost) {
-        var packet = new ArrowPacket(ArrowPacket.TYPE_LOST, []);
-        slave.sendToController(packet.encode()).catchError((_) {});
-      }
-    });
+    querySelector('#status').innerHtml = 'Establishing...';
   }
 }
 
 void handleArrow(ArrowPacket packet) {
-  if (boardView.board == null) return;
+  if (packet.type == ArrowPacket.TYPE_READY) {
+    querySelector('#status').innerHtml = 'Playing!';
+    boardView.play(new Board(10, 20)).then(gameOver);
+    return;
+  }
+  
+  if (boardView.state == null) return;
   if (packet.payload.length != 1) return;
   
   int arrow = packet.payload[0];
   if (arrow == ArrowPacket.ARROW_LEFT) {
-    boardView.board.translate(false);
+    boardView.state.translate(false);
   } else if (arrow == ArrowPacket.ARROW_RIGHT) {
-    boardView.board.translate(true);
+    boardView.state.translate(true);
   } else if (arrow == ArrowPacket.ARROW_UP) {
-    boardView.board.turn();
+    boardView.state.turn();
   } else if (arrow == ArrowPacket.ARROW_DOWN) {
-    boardView.board.accelerate();
+    boardView.state.accelerate();
   } else {
     // unrecognized packet; avoid calling boardView.draw() for no reason
     return;
   }
   boardView.draw();
+}
+
+void gameOver(bool lost) {
+  if (!lost) return;
+  var packet = new ArrowPacket(ArrowPacket.TYPE_LOST, []);
+  slave.sendToController(packet.encode()).catchError((_) {});
 }

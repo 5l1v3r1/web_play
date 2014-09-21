@@ -13,14 +13,19 @@ class ArrowPacket {
   static const int TYPE_PASSCODE = 0;
   
   /**
+   * An event sent by a controller to indicate that it is ready.
+   */
+  static const int TYPE_READY = 1;
+  
+  /**
    * An arrow event.
    */
-  static const int TYPE_ARROW = 1;
+  static const int TYPE_ARROW = 2;
   
   /**
    * A "loss" event.
    */
-  static const int TYPE_LOST = 2;
+  static const int TYPE_LOST = 3;
   
   /**
    * The up arrow key
