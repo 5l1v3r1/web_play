@@ -48,7 +48,7 @@ abstract class Client extends Identifiable implements Sink<Packet> {
       } else {
         Packet packet;
         try {
-          packet = new Packet.decode(obj);
+          packet = Packet.decode(obj);
         } catch (_) {
           socket.close();
           return;

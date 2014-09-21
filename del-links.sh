@@ -3,4 +3,8 @@ rm -f tetris/slave/packages
 rm -f tetris/slave/shared
 rm -f tetris/controller/packages
 rm -f tetris/controller/shared
+rm -f snake/slave/packages
+rm -f snake/slave/shared
+rm -f snake/controller/packages
+rm -f snake/controller/shared
 rm -f server/packages

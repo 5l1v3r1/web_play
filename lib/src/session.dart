@@ -73,7 +73,7 @@ abstract class Session implements Sink<Packet> {
     socket.onMessage.listen((MessageEvent evt) {
       Packet packet;
       try {
-        packet = new Packet.decode(evt.data);
+        packet = Packet.decode(evt.data);
       } catch (_) {
         close();
         return;

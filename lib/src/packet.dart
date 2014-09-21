@@ -16,6 +16,9 @@ int decodeInteger(List<int> data) {
       (data[4] << 32) | (data[5] << 40);
 }
 
+/**
+ * A raw packet in the web_play protocol.
+ */
 class Packet {
   static const int TYPE_CONNECT = 0;
   static const int TYPE_SEND_TO_SLAVE = 1;
@@ -30,7 +33,7 @@ class Packet {
   
   Packet(this.type, this.number, this.body);
   
-  Packet.decode(dynamic data) {
+  static Packet decode(dynamic data) {
     List<int> intList = null;
     if (data is List<int>) {
       intList = data;
@@ -41,9 +44,8 @@ class Packet {
     if (intList.length < 7) {
       throw new FormatException('packet buffer too small');
     }
-    type = intList[0];
-    number = decodeInteger(intList.sublist(1));
-    body = intList.sublist(7);
+    return new Packet(intList[0], decodeInteger(intList.sublist(1)),
+                      intList.sublist(7));
   }
   
   List<int> encode() {

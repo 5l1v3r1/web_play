@@ -58,7 +58,7 @@ class ControllerSession extends Session {
       socket.onMessage.first.then((MessageEvent evt) {
         s1.cancel();
         s2.cancel();
-        Packet packet = new Packet.decode(evt.data);
+        Packet packet = Packet.decode(evt.data);
         if (packet.type != Packet.TYPE_CONNECT || packet.body.length != 1 ||
             packet.number != 0) {
           c.completeError(new ControllerSessionNegotiationError());

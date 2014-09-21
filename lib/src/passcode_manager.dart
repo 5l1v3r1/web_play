@@ -7,15 +7,9 @@ class PasscodeManager {
   String _passcode;
   
   /**
-   * A human-readable representation of the current passcode.
+   * A human-readable representation of the current passcode or `null`.
    */
-  String get passcodeString {
-    if (_passcode != null) {
-      return _passcode;
-    } else {
-      return 'null';
-    }
-  }
+  String get passcodeString => _passcode;
   
   /**
    * Create a new passcode manager with no current passcode.

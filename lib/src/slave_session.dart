@@ -63,7 +63,7 @@ class SlaveSession extends Session {
       s2.cancel();
       assert(socket != null);
       try {
-        Packet packet = new Packet.decode(evt.data);
+        Packet packet = Packet.decode(evt.data);
         if (packet.type != Packet.TYPE_SLAVE_IDENTIFIER) {
           c.completeError(new SlaveSessionNegotiationError());
         } else {

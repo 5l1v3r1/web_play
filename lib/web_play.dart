@@ -20,3 +20,6 @@ part 'src/slave_controller.dart';
 part 'src/persistent_slave.dart';
 part 'src/controller_ui.dart';
 part 'src/passcode_manager.dart';
+part 'src/arrow_controller_ui.dart';
+part 'src/arrow_packet.dart';
+part 'src/singular_slave.dart';
