@@ -1,3 +1,7 @@
 # Abstract
 
-This will be a remote-controlled game. I have not decided the specifics yet, but you will be able to control a larger screen from a mobile device using WebSockets.
+The **web_play** platform allows you to develop games which can be controlled remotely via websockets.
+
+# TODO
+
+ * Rewrite SingularSlave to determine state based on object availability

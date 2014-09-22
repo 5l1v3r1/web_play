@@ -23,4 +23,5 @@ part 'src/passcode_manager.dart';
 part 'src/arrow_controller_ui.dart';
 part 'src/arrow_packet.dart';
 part 'src/singular_slave.dart';
+part 'src/static_party_slave.dart';
 part 'src/moving_game_view.dart';

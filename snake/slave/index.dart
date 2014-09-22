@@ -60,5 +60,5 @@ void handleArrow(ArrowPacket packet) {
 void gameOver(bool lost) {
   if (!lost) return;
   var packet = new ArrowPacket(ArrowPacket.TYPE_LOST, []);
-  slave.sendToController(packet.encode()).catchError((_) {});
+  slave.sendToController(packet.encode());
 }
