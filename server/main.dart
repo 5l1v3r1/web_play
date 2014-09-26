@@ -66,7 +66,7 @@ void main(List<String> args) {
   router.redirect(relPath, '$relPath/');
   router.staticFile('$relPath/', projectFile('server', ['index.html']));
   
-  for (String game in ['tetris', 'snake']) {
+  for (String game in ['tetris', 'snake', 'processing']) {
     router.get('$relPath/$game/s/websocket', slaveWebsocket);
     router.get('$relPath/$game/c/websocket', controllerWebsocket);
     routeGame(router, relPath, game);
